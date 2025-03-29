@@ -238,4 +238,96 @@ quam vel augue.`
       expect(findReleaseNote(body)).toBeUndefined()
     })
   })
+})import { findIssueRef, findReleaseNote } from '../parser'
+
+describe('changelog/parser', () => {
+  describe('findIssueRef', () => {
+    const exampleBody = `
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sollicitudin turpis
+    tempor euismod fermentum. Nullam hendrerit neque eget risus faucibus volutpat. Donec
+    ultrices, orci quis auctor ultrices, nulla lacus gravida lectus, non rutrum dolor
+    quam vel augue.`;
+
+    it('should detect fixes message at the start of PR body', () => {
+      const body = `
+Fixes #2314
+${exampleBody}`;
+      expect(findIssueRef(body)).toBe(' #2314')
+    })
+
+    it('should detect multiple fixed issues in PR body', () => {
+      const body = `
+Fixes #2314
+Fixes #1234
+${exampleBody}`;
+      expect(findIssueRef(body)).toBe(' #2314 #1234')
+    })
+
+    it('should handle colon after fixed message', () => {
+      const body = `
+Fixes: #2314
+${exampleBody}`;
+      expect(findIssueRef(body)).toBe(' #2314')
+    })
+
+    it('should handle closes syntax', () => {
+      const body = `
+Closes: #2314
+${exampleBody}`;
+      expect(findIssueRef(body)).toBe(' #2314')
+    })
+
+    it('should handle resolves syntax', () => {
+      const body = `This resolves #2314 and is totally wild`
+      expect(findIssueRef(body)).toBe(' #2314')
+    })
+
+    it('should return empty string if no issue reference is found', () => {
+      const body = exampleBody;
+      expect(findIssueRef(body)).toBe('')
+    })
+  })
+
+  describe('findReleaseNote', () => {
+    const exampleBody = `
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer sollicitudin turpis
+    tempor euismod fermentum. Nullam hendrerit neque eget risus faucibus volutpat. Donec
+    ultrices, orci quis auctor ultrices, nulla lacus gravida lectus, non rutrum dolor
+    quam vel augue.`;
+
+    it('should detect release note at the end of the body', () => {
+      const body = `${exampleBody}
+Notes: [Fixed] Fix lorem impsum dolor sit amet`;
+      expect(findReleaseNote(body)).toBe('[Fixed] Fix lorem impsum dolor sit amet')
+    })
+
+    it('should remove dot at the end of release note', () => {
+      const body = `${exampleBody}
+Notes: [Fixed] Fix lorem impsum dolor sit amet.`;
+      expect(findReleaseNote(body)).toBe('[Fixed] Fix lorem impsum dolor sit amet')
+    })
+
+    it('should look for the last Notes entry if there are several', () => {
+      const body = `${exampleBody}
+Notes: ignore this notes
+Notes: These are valid notes`;
+      expect(findReleaseNote(body)).toBe('These are valid notes')
+    })
+
+    it('should detect no release notes wanted for the PR', () => {
+      const body = `${exampleBody}
+Notes: no-notes`;
+      expect(findReleaseNote(body)).toBeNull()
+    })
+
+    it('should detect no release notes were added to the PR', () => {
+      const body = exampleBody;
+      expect(findReleaseNote(body)).toBeUndefined()
+    })
+
+    it('should return undefined if the body is empty', () => {
+      const body = '';
+      expect(findReleaseNote(body)).toBeUndefined()
+    })
+  })
 })
