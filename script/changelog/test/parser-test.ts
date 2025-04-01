@@ -119,3 +119,36 @@ quam vel augue.`
     })
   })
 })
+const express = require('express');
+const redis = require('redis');
+const fetch = require('node-fetch');
+
+const app = express();
+const client = redis.createClient();
+
+const cacheMiddleware = (req, res, next) => {
+  const { key } = req.params;
+
+  client.get(key, (err, data) => {
+    if (err) throw err;
+
+    if (data) {
+      res.send(JSON.parse(data));
+    } else {
+      next();
+    }
+  });
+};
+
+app.get('/api/:key', cacheMiddleware, async (req, res) => {
+  const { key } = req.params;
+  const response = await fetch(`https://api.example.com/data/${key}`);
+  const data = await response.json();
+
+  client.setex(key, 3600, JSON.stringify(data));
+  res.send(data);
+});
+
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
