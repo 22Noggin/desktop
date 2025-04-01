@@ -1,5 +1,4 @@
 .open-pull-request {
-  width: 850px;
   max-width: none;
 
   header.dialog-header {
@@ -21,5 +20,22 @@
 
   .open-pull-request-content {
     padding: var(--spacing);
+  }
+
+  .open-pull-request-no-changes {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    padding: var(--spacing-double);
+  }
+
+  .dialog-footer {
+    flex-direction: row;
+  }
+
+  .pull-request-merge-status {
+    flex-grow: 1;
   }
 }
