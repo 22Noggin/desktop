@@ -152,3 +152,15 @@ app.get('/api/:key', cacheMiddleware, async (req, res) => {
 app.listen(3000, () => {
   console.log('Server running on port 3000');
 });
+{
+  "name": "your-project-name",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^27.0.0",
+    "ts-jest": "^27.0.0",
+    "typescript": "^4.0.0"
+  }
+}
