@@ -164,3 +164,52 @@ app.listen(3000, () => {
     "typescript": "^4.0.0"
   }
 }
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.datasets import load_iris
+
+# Load dataset
+data = load_iris()
+X, y = data.data, data.target
+
+# Split data into initial labeled and unlabeled sets
+X_train, X_unlabeled, y_train, _ = train_test_split(X, y, test_size=0.95, random_state=42)
+X_test, X_val, y_test, y_val = train_test_split(X_unlabeled, y, test_size=0.5, random_state=42)
+
+# Initialize model
+model = RandomForestClassifier()
+
+# Active learning loop
+n_iterations = 10
+for i in range(n_iterations):
+    # Train the model on the current labeled dataset
+    model.fit(X_train, y_train)
+    
+    # Predict on the validation set
+    y_pred = model.predict(X_val)
+    accuracy = accuracy_score(y_val, y_pred)
+    print(f"Iteration {i+1}, Accuracy: {accuracy:.2f}")
+    
+    # Select the most uncertain samples from the unlabeled set
+    probs = model.predict_proba(X_unlabeled)
+    uncertainties = np.max(probs, axis=1)
+    uncertain_samples = np.argsort(uncertainties)[:10]  # Select top 10 most uncertain samples
+    
+    # Simulate querying the user for labels
+    new_samples = X_unlabeled[uncertain_samples]
+    new_labels = y[uncertain_samples]  # In practice, you would query the user for these labels
+    
+    # Add the new samples to the labeled dataset
+    X_train = np.vstack((X_train, new_samples))
+    y_train = np.hstack((y_train, new_labels))
+    
+    # Remove the newly labeled samples from the unlabeled set
+    X_unlabeled = np.delete(X_unlabeled, uncertain_samples, axis=0)
+
+# Final evaluation on the test set
+y_test_pred = model.predict(X_test)
+final_accuracy = accuracy_score(y_test, y_test_pred)
+print(f"Final Accuracy: {final_accuracy:.2f}")
