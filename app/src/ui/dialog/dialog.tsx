@@ -3,6 +3,8 @@ import classNames from 'classnames'
 import { DialogHeader } from './header'
 import { createUniqueId, releaseUniqueId } from '../lib/id-pool'
 import { getTitleBarHeight } from '../window/title-bar'
+import { clamp } from '../../lib/clamp'
+import { spacing, spacingQuad } from '../lib/spacial-constants'
 
 /**
  * The time (in milliseconds) from when the dialog is mounted
@@ -104,6 +106,16 @@ interface IDialogProps {
    * of the loading operation.
    */
   readonly loading?: boolean
+
+  /**
+   * An optional max width for the dialog.
+   * This is used to make a dialog width's responsive.
+   *
+   * On window resize, the dialog will adjust to fill the app window width sans
+   * padding within the constrains of the this max width and a css defined
+   * minimum.
+   */
+  readonly maxWidth?: number
 }
 
 interface IDialogState {
@@ -180,6 +192,12 @@ export class Dialog extends React.Component<IDialogProps, IDialogState> {
       return
     }
 
+    if (this.props.maxWidth !== undefined) {
+      const widthSansPadding = window.innerWidth - spacingQuad
+      const newWidth = clamp(widthSansPadding, -Infinity, this.props.maxWidth)
+      this.dialogElement.style.width = `${newWidth}px`
+    }
+
     const { offsetTop, offsetHeight } = this.dialogElement
 
     // Not much we can do if the dialog is bigger than the window
@@ -187,7 +205,7 @@ export class Dialog extends React.Component<IDialogProps, IDialogState> {
       return
     }
 
-    const padding = 10
+    const padding = spacing
     const overflow = offsetTop + offsetHeight + padding - window.innerHeight
 
     if (overflow > 0) {
